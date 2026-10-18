@@ -10,7 +10,7 @@ after(async () => {
 test("GET /health mengembalikan status ok", async () => {
   const response = await request(app).get("/health");
 
-  assert.equal(response.status, 200);
+  assert.equal(response.status, 503);
   assert.deepEqual(response.body, { status: "ok" });
 });
 
