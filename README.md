@@ -99,6 +99,31 @@ curl -i -X POST http://localhost:3001/products \
   -d '{"name":"Barang Invalid","stock":-1}'
 ```
 
+## Deployment dari GHCR
+
+Image dipublikasikan oleh GitHub Actions setelah test dan build berhasil
+pada push ke branch main. Tag image menggunakan SHA commit lengkap.
+
+Isi `IMAGE_TAG` di `.env` dengan SHA commit yang sudah dipublikasikan, lalu:
+
+```bash
+docker compose -f compose.yaml -f compose.deploy.yaml pull api
+docker compose -f compose.yaml -f compose.deploy.yaml up -d --no-build api
+```
+
+Periksa hasil deployment:
+
+```bash
+curl -i http://localhost:3001/ready
+curl http://localhost:3001/products
+```
+
+Untuk kembali membangun dan menjalankan kode lokal:
+
+```bash
+docker compose up -d --build api
+```
+
 ## Pengujian Manual yang Sudah Dilakukan
 
 - Koneksi API ke PostgreSQL menghasilkan HTTP 200 pada `/ready`.

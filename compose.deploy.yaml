@@ -1,0 +1,3 @@
+services:
+  api:
+    image: ghcr.io/reyhanhad/stock-api:${IMAGE_TAG:?Set IMAGE_TAG in .env}
