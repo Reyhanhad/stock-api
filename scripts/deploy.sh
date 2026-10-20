@@ -26,6 +26,12 @@ echo "Memeriksa kesiapan API..."
 for ((attempt = 1; attempt <= 15; attempt++)); do
   if curl --fail --silent --show-error \
     --max-time 3 http://localhost:3001/ready; then
+    if grep -q '^IMAGE_TAG=' .env; then
+      sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=$IMAGE_TAG/" .env
+    else
+      printf '\nIMAGE_TAG=%s\n' "$IMAGE_TAG" >> .env
+    fi
+
     printf '\nDeployment berhasil: %s\n' "$IMAGE_TAG"
     exit 0
   fi
