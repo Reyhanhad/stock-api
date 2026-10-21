@@ -150,6 +150,32 @@ docker compose down
 Named volume tetap disimpan. Opsi `docker compose down -v`
 akan menghapus volume beserta data database.
 
+## CI dan Deployment
+
+GitHub Actions menjalankan test, membangun image, lalu memublikasikannya
+ke GHCR pada push ke branch main. Image diberi tag SHA commit lengkap.
+Test yang gagal menghentikan proses build.
+
+Deployment dipicu manual melalui job Jenkins
+`stock-api-deploy-pipeline`, dengan parameter `DEPLOY_SHA`.
+
+Pipeline memiliki tiga stage:
+1. Validate SHA: memeriksa format SHA.
+2. Deploy: mengunduh image, memperbarui container, dan memeriksa /ready.
+3. Verify running image: memastikan tag container sesuai SHA pilihan.
+
+Jenkins controller berjalan dalam container. Agent `local-deploy`
+berjalan di laptop menggunakan Java 21 dan mengakses Docker lokal.
+Agent harus online agar deployment dapat berjalan.
+
+Rollback aplikasi dilakukan dengan menjalankan job menggunakan SHA
+image lama yang sudah berhasil dipublikasikan. Rollback ini tidak
+mengembalikan data atau struktur database.
+
+Deployment masih menggunakan script, konfigurasi Compose, dan .env
+di /home/kirko/projects/stock-api. Jenkinsfile diambil dari branch main,
+sedangkan file deployment lokal belum disinkronkan otomatis oleh job.
+
 ## Catatan Konfigurasi
 
 - `.env` diabaikan oleh Git dan tidak dimasukkan ke image.
