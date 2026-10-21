@@ -4,8 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "node --test",
-    "start": "node --env-file=.env src/index.js"
+    "test": "node --test test/app.test.js",
+    "start": "node --env-file=.env src/index.js",
+    "test:integration": "node --test test/products.integration.js"
   },
   "keywords": [],
   "type": "commonjs",
