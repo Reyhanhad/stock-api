@@ -1,8 +1,10 @@
+const { metricsMiddleware, metricsHandler } = require("./metrics");
 const express = require("express");
 const { Pool } = require("pg");
 
 const app = express();
-
+app.use(metricsMiddleware);
+app.get("/metrics", metricsHandler);
 
 const pool = new Pool({
   host: process.env.DB_HOST,
