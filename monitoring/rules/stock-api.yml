@@ -1,0 +1,12 @@
+groups:
+  - name: stock-api
+    interval: 15s
+    rules:
+      - alert: StockAPIScrapeDown
+        expr: up{job="stock-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Metrik Stock API tidak dapat diakses"
+          description: "Prometheus gagal mengambil metrik dari {{ $labels.instance }} selama minimal satu menit."
