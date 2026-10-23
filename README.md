@@ -190,3 +190,98 @@ sedangkan file deployment lokal belum disinkronkan otomatis oleh job.
 
 Proyek ini adalah lab lokal. Belum mencakup autentikasi,
 HTTPS, pipeline CI/CD, backup otomatis, atau deployment cloud.
+
+## Monitoring dan Notifikasi
+
+Stock API menggunakan Prometheus untuk mengumpulkan metrik, Grafana
+untuk visualisasi, dan Alertmanager untuk mengirim notifikasi melalui Gmail.
+
+| Komponen | Alamat lokal | Fungsi |
+|---|---|---|
+| Stock API | http://localhost:3001 | API aplikasi |
+| Prometheus | http://localhost:9090 | Metrik dan evaluasi aturan alert |
+| Grafana | http://localhost:3002 | Dashboard monitoring |
+| Alertmanager | http://localhost:9093 | Pengelolaan dan pengiriman alert |
+
+### Menjalankan stack
+
+Pastikan `.env` sudah diisi, termasuk `IMAGE_TAG` yang tersedia di GHCR.
+
+Untuk notifikasi Gmail:
+1. Aktifkan Verifikasi 2 Langkah dan buat Google App Password.
+2. Simpan App Password di `~/.config/stock-api/gmail_app_password`.
+3. Gunakan permission `700` pada folder tersebut dan `444` pada file.
+   Folder membatasi akses lokal, sedangkan file dipasang read-only
+   agar proses Alertmanager dapat membacanya.
+4. Sesuaikan `smtp_from`, `smtp_auth_username`, dan alamat penerima
+   pada `monitoring/alertmanager.yml`.
+
+App Password disimpan di luar repository.
+
+Jalankan dari direktori proyek:
+
+```bash
+docker compose \
+  -f compose.yaml \
+  -f compose.deploy.yaml \
+  -f compose.monitoring.yaml \
+  up -d --no-build db api prometheus grafana alertmanager
+```
+
+### Dashboard Grafana
+
+Dashboard `Stock API Monitoring` tersedia melalui provisioning
+di folder `Stock API`, dengan panel:
+
+- Status scrape API.
+- Jumlah request per detik.
+- Latensi request persentil ke-95.
+- Persentase respons HTTP 4xx dan 5xx.
+- Penggunaan memori proses API.
+
+Metrik HTTP memerlukan traffic aplikasi. Saat tidak ada request,
+sebagian panel dapat menampilkan `No data`.
+
+### Aturan alert
+
+`StockAPIScrapeDown` aktif ketika:
+
+```promql
+up{job="stock-api"} == 0
+```
+
+Kondisi harus bertahan selama satu menit sebelum status menjadi
+`Firing`. Alertmanager mengirim email gangguan dan email pemulihan.
+
+Alert ini memeriksa keterjangkauan endpoint `/metrics`.
+Kesiapan koneksi database diperiksa secara terpisah melalui `/ready`.
+
+### Pengujian gangguan dan pemulihan
+
+1. Pastikan API berjalan dan alert berstatus `Inactive`.
+2. Jalankan `docker compose stop api`.
+3. Tunggu sekitar dua menit, lalu periksa:
+   - Prometheus: alert berubah menjadi `Firing`.
+   - Alertmanager: `StockAPIScrapeDown` muncul.
+   - Gmail: email gangguan diterima.
+4. Jalankan `docker compose start api`.
+5. Tunggu sekitar satu sampai dua menit, lalu periksa:
+   - Alert kembali `Inactive` di Prometheus.
+   - Alert aktif hilang dari Alertmanager.
+   - Gmail menerima email pemulihan.
+6. Periksa kesiapan API:
+
+```bash
+curl -fsS http://localhost:3001/ready
+```
+
+Pengujian gangguan dan pemulihan telah berhasil dilakukan,
+termasuk penerimaan kedua email.
+
+### Batasan
+
+Seluruh komponen berjalan pada satu laptop. Ketika laptop atau
+Docker daemon mati total, monitoring ikut berhenti dan tidak dapat
+mengirim peringatan.
+
+Penerimaan email juga bergantung pada koneksi internet dan layanan SMTP.
