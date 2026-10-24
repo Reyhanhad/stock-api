@@ -285,3 +285,8 @@ Docker daemon mati total, monitoring ikut berhenti dan tidak dapat
 mengirim peringatan.
 
 Penerimaan email juga bergantung pada koneksi internet dan layanan SMTP.
+
+### Pengujian setelah reboot
+- Kelima service menyala otomatis tanpa menjalankan `compose up` atau `start`.
+- PostgreSQL berstatus healthy.
+- Endpoint `/ready` mengembalikan `{"status":"ready","database":"connected"}`.
