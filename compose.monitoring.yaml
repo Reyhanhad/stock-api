@@ -28,6 +28,17 @@ services:
       - --cluster.listen-address=
     restart: unless-stopped
 
+  loki:
+    image: grafana/loki:3.7.9
+    ports:
+      - "127.0.0.1:3100:3100"
+    volumes:
+      - ./monitoring/loki.yml:/etc/loki/config.yml:ro
+      - loki_data:/loki
+    command:
+      - -config.file=/etc/loki/config.yml
+    restart: unless-stopped
+
   grafana:
     image: grafana/grafana:13.2.4
     ports:
@@ -39,8 +50,24 @@ services:
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
     restart: unless-stopped
+  alloy:
+    image: grafana/alloy:v1.21.2
+    ports:
+      - "127.0.0.1:12345:12345"
+    volumes:
+      - ./monitoring/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - alloy_data:/var/lib/alloy/data
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    restart: unless-stopped
 
 volumes:
   prometheus_data:
   grafana_data:
   alertmanager_data:
+  loki_data:
+  alloy_data:
