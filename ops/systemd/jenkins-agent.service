@@ -1,0 +1,19 @@
+[Unit]
+Description=Jenkins local-deploy agent
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+WorkingDirectory=%h/jenkins-agent
+ExecStart=%h/tools/java21/bin/java \
+  -jar %h/jenkins-agent/agent.jar \
+  -url http://localhost:8080/ \
+  -secret @%h/.config/stock-api/jenkins-agent-secret \
+  -name local-deploy \
+  -webSocket \
+  -workDir %h/jenkins-agent
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=default.target
