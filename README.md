@@ -290,3 +290,39 @@ Penerimaan email juga bergantung pada koneksi internet dan layanan SMTP.
 - Kelima service menyala otomatis tanpa menjalankan `compose up` atau `start`.
 - PostgreSQL berstatus healthy.
 - Endpoint `/ready` mengembalikan `{"status":"ready","database":"connected"}`.
+
+### Logging Terpusat
+
+Grafana Alloy mengambil log container API dan PostgreSQL,
+kemudian mengirimkannya ke Loki.
+
+Log request API menggunakan format JSON dengan field:
+- Request ID, juga dikirim melalui header X-Request-ID.
+- Method dan path.
+- Status HTTP.
+- Durasi dalam milidetik.
+- Level info, warn, atau error.
+
+Pengujian POST /products dengan stok negatif menghasilkan
+HTTP 400 dan log level warn yang berhasil ditemukan di Grafana.
+
+Contoh query:
+
+{job="stock-api", service_name="api"}
+| json
+| __error__=""
+| level="warn"
+
+### Jenkins Deployment Agent
+
+Agent local-deploy dijalankan sebagai systemd user service.
+Template konfigurasi tersedia di ops/systemd/jenkins-agent.service.
+
+Service diaktifkan dengan linger dan menggunakan restart otomatis.
+Secret agent disimpan di luar repository.
+
+Periksa status:
+systemctl --user status jenkins-agent.service --no-pager
+
+Periksa log:
+journalctl --user -u jenkins-agent.service -n 40 --no-pager
