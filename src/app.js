@@ -1,8 +1,10 @@
+const { logger, requestLogger } = require("./logger");
 const { metricsMiddleware, metricsHandler } = require("./metrics");
 const express = require("express");
 const { Pool } = require("pg");
 
 const app = express();
+app.use(requestLogger);
 app.use(metricsMiddleware);
 app.get("/metrics", metricsHandler);
 
@@ -16,7 +18,7 @@ const pool = new Pool({
 });
 
 pool.on("error", (error) => {
-  console.error("Koneksi database bermasalah:", error.message);
+  logger.error({ err: error }, "Koneksi database bermasalah");
 });
 
 app.use(express.json());
@@ -38,8 +40,8 @@ app.get("/ready", async (req, res) => {
       database: "connected",
     });
   } catch (error) {
-    console.error("Pemeriksaan database gagal:", error.message);
-
+    req.log.error({ err: error }, "Operasi database gagal");
+    
     res.status(503).json({
       status: "not_ready",
       database: "disconnected",
